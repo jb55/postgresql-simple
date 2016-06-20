@@ -225,12 +225,13 @@ getCopyCommandTag funcName pqconn = do
     let rowCount =   P.string "COPY " *> (P.decimal <* P.endOfInput)
     case P.parseOnly rowCount cmdStat of
       Left  _ -> do mmsg <- PQ.errorMessage pqconn
-                    fail $ errCmdStatusFmt
+                    fail $ (errCmdStatusFmt (B.unpack cmdStat))
                         ++ maybe "" (\msg -> "\nConnection error: "++B.unpack msg) mmsg
       Right n -> return $! n
   where
-    errCmdStatus    = B.unpack funcName ++ ": failed to fetch command status"
-    errCmdStatusFmt = B.unpack funcName ++ ": failed to parse command status"
+    quote str = '\'' : str ++ "'"
+    errCmdStatus         = B.unpack funcName ++ ": failed to fetch command status"
+    errCmdStatusFmt body = B.unpack funcName ++ ": failed to parse command status: " ++ quote body
 
 
 consumeResults :: PQ.Connection -> IO ()
